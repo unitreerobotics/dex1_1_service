@@ -124,7 +124,7 @@ public:
         int total = motors_.size();
         int index = 1;
         for (auto& [id, motor_info] : motors_) {
-            std::string side = (id == 0) ? "Right" : "Left";
+            std::string side = (id == 0) ? "right" : "left";
             spdlog::info("========== Motor Calibration (Motor {} (index) of {} (total)) ==========", index, total);
             spdlog::info("  - Motor ID: {}, \t Side: {}, \t Port: {}", id, side, motor_info.port_name);
             spdlog::info("Please manually close the gripper tightly. \n \t\t\t\t Then press 's' + Enter to calibrate, or any other key to skip.");
@@ -191,7 +191,7 @@ private:
         if (!motors_.empty()) {
             spdlog::info("Detected motors:");
             for (const auto& [id, motor_info] : motors_) {
-                std::string side = (id == 0) ? "Right" : "Left";
+                std::string side = (id == 0) ? "right" : "left";
                 std::string cmdTopic = "rt/dex1/" + side + "/cmd";
                 std::string stateTopic = "rt/dex1/" + side + "/state";
                 spdlog::info("  - Motor ID: {} \t Side: {} \t Port: {} \t cmdTopic: {} \t stateTopic: {}", id, side, motor_info.port_name, cmdTopic, stateTopic);
