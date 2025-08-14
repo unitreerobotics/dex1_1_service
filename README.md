@@ -129,27 +129,40 @@ R= 0.508 L= 0.502
 
 # FAQ
 1. Error when `make -j6`:
-```bash
-unitree@ubuntu:~/dex1_1_service/build$ make -j6
-Scanning dependencies of target dex1_1_gripper_server
-Scanning dependencies of target test_dex1_1_gripper_server
-[ 50%] Building CXX object CMakeFiles/test_dex1_1_gripper_server.dir/test/test_gripper.cpp.o
-[ 50%] Building CXX object CMakeFiles/dex1_1_gripper_server.dir/main.cpp.o
-/home/unitree/dex1_1_service/test/test_gripper.cpp:1:10: fatal error: unitree/idl/go2/MotorCmds_.hpp: No such file or directory
-    1 | #include <unitree/idl/go2/MotorCmds_.hpp>
-      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/home/unitree/dex1_1_service/main.cpp:1:10: fatal error: unitree/idl/go2/MotorCmds_.hpp: No such file or directory
-    1 | #include <unitree/idl/go2/MotorCmds_.hpp>
-      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-compilation terminated.
-compilation terminated.
-```
-This error mentions that the unitree_sdk2 headfile could not be found. First compile and install unitree_sdk2:
-```bash
-cd ~
-git clone https://github.com/unitreerobotics/unitree_sdk2
-cd unitree_sdk2
-mkdir build & cd build
-cmake ..
-sudo make install
-```
+    ```bash
+    unitree@ubuntu:~/dex1_1_service/build$ make -j6
+    Scanning dependencies of target dex1_1_gripper_server
+    Scanning dependencies of target test_dex1_1_gripper_server
+    [ 50%] Building CXX object CMakeFiles/test_dex1_1_gripper_server.dir/test/test_gripper.cpp.o
+    [ 50%] Building CXX object CMakeFiles/dex1_1_gripper_server.dir/main.cpp.o
+    /home/unitree/dex1_1_service/test/test_gripper.cpp:1:10: fatal error: unitree/idl/go2/MotorCmds_.hpp: No such file or directory
+        1 | #include <unitree/idl/go2/MotorCmds_.hpp>
+          |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    /home/unitree/dex1_1_service/main.cpp:1:10: fatal error: unitree/idl/go2/MotorCmds_.hpp: No such file or directory
+        1 | #include <unitree/idl/go2/MotorCmds_.hpp>
+          |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    compilation terminated.
+    compilation terminated.
+    ```
+    This error mentions that the unitree_sdk2 headfile could not be found. First compile and install unitree_sdk2:
+    ```bash
+    cd ~
+    git clone https://github.com/unitreerobotics/unitree_sdk2
+    cd unitree_sdk2
+    mkdir build & cd build
+    cmake ..
+    sudo make install
+    ```
+2. Error when `sudo ./dex1_1_gripper_server`:
+    ```bash
+    unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server
+    [2025-08-14 09:56:53.595] [info] Available Serial Ports: /dev/ttyUSB3, /dev/ttyUSB2, /dev/ttyUSB1, /dev/ttyUSB0
+    [2025-08-14 09:56:54.339] [error] Motors not found after multiple attempts.
+    # or
+    unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server
+    [2025-08-14 09:58:12.010] [info] Available Serial Ports: 
+    [2025-08-14 09:58:12.010] [warning] No ttyUSB serial ports found.
+    ```
+    The two situations described above are:  
+    1. The gripper power is not connected.  
+    2. The gripper serial board (which connects to the G1 USB port) is not connected.
