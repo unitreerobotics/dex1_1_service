@@ -38,20 +38,27 @@ make -j6
 # Unitree Dex1-1 Gripper Server:
 #   -h [ --help ]                produce help message
 #   -v [ --version ]             show version
-#   -c [ --calibration ]         calibrate the gripper motor
 #   -n [ --network ] arg (=eth0) dds networkInterface
-#   -l [ --left ]                test left dex1 gripper
-#   -r [ --right ]               test right dex1 gripper
+#   -c [ --calibration ]         calibrate the gripper motor
 
 # start server
 sudo ./dex1_1_gripper_server --network eth0
 # Simplified (defaults apply)
 sudo ./dex1_1_gripper_server
 
+# Run `sudo ./test_dex1_1_gripper_server -h` for details. The output will be:
+# Unitree Dex1-1 Gripper Server Test:
+#   -h [ --help ]                produce help message
+#   -v [ --version ]             show version
+#   -n [ --network ] arg (=eth0) dds networkInterface
+#   -l [ --left ]                test left dex1 gripper
+#   -r [ --right ]               test right dex1 gripper
+
 # run test examples
 sudo ./test_dex1_1_gripper_server --network eth0 -l -r
 # Test only the left side or the right side individually.
 sudo ./test_dex1_1_gripper_server --network eth0 -l
+# or test only the right side or the right side individually.
 sudo ./test_dex1_1_gripper_server -r
 ```
 
@@ -127,7 +134,99 @@ unitree@ubuntu:~/dex1_1_service/build$ sudo ./test_dex1_1_gripper_server -l -r
 R= 0.508 L= 0.502
 ```
 
-# FAQ
+
+# 4. 🎨 Actuator Parameters
+
+<p align="center">
+  <a href="https://github.com/unitreerobotics/unitree_rl_lab/blob/main/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree_actuators.py">
+    <img src="https://oss-global-cdn.unitree.com/static/8f96b5d7abe84e11bf206dac64115a38_1698x1041.png" alt="actuator" style="width: 85%;">
+  </a>
+</p>
+
+```python
+class UnitreeActuator(DelayedPDActuator):
+    """Unitree actuator class that implements a torque-speed curve for the actuators.
+
+    The torque-speed curve is defined as follows:
+
+            Torque Limit, N·m
+                ^
+    Y2──────────|
+                |──────────────Y1
+                |              │\
+                |              │ \
+                |              │  \
+                |              |   \
+    ------------+--------------|------> velocity: rad/s
+                              X1   X2
+
+    - Y1: Peak Torque Test (Torque and Speed in the Same Direction)
+    - Y2: Peak Torque Test (Torque and Speed in the Opposite Direction)
+    - X1: Maximum Speed at Full Torque (T-N Curve Knee Point)
+    - X2: No-Load Speed Test
+
+    - Fs: Static friction coefficient
+    - Fd: Dynamic friction coefficient
+    - Va: Velocity at which the friction is fully activated
+    """
+
+    cfg: UnitreeActuatorCfg
+
+    armature: torch.Tensor
+    """The armature of the actuator joints. Shape is (num_envs, num_joints).
+        armature = J2 + J1 * i2 ^ 2 + Jr * (i1 * i2) ^ 2
+    """
+    # ...
+
+@configclass
+class UnitreeActuatorCfg(DelayedPDActuatorCfg):
+    """
+    Configuration for Unitree actuators.
+    """
+
+    class_type: type = UnitreeActuator
+
+    X1: float = 1e9
+    """Maximum Speed at Full Torque(T-N Curve Knee Point) Unit: rad/s"""
+
+    X2: float = 1e9
+    """No-Load Speed Test Unit: rad/s"""
+
+    Y1: float = MISSING
+    """Peak Torque Test(Torque and Speed in the Same Direction) Unit: N*m"""
+
+    Y2: float | None = None
+    """Peak Torque Test(Torque and Speed in the Opposite Direction) Unit: N*m"""
+
+    Fs: float = 0.0
+    """ Static friction coefficient """
+
+    Fd: float = 0.0
+    """ Dynamic friction coefficient """
+
+    Va: float = 0.01
+    """ Velocity at which the friction is fully activated """
+
+@configclass
+class UnitreeActuatorCfg_W4010_25(UnitreeActuatorCfg):
+    X1 = 15.3
+    X2 = 24.76
+    Y1 = 4.8
+    Y2 = 8.6
+
+    Fs = 0.6
+    Fd = 0.06
+
+    """
+    | rotor  | 0.068e-4 kg·m²
+    | gear_1 |                | ratio | 5
+    | gear_2 |                | ratio | 5
+    """
+    armature = 0.00425
+```
+
+
+# ❓ FAQ
 1. Error when `make -j6`:
     ```bash
     unitree@ubuntu:~/dex1_1_service/build$ make -j6

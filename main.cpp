@@ -17,7 +17,7 @@
 #include <string>
 #include <filesystem>
 
-
+// Function to list available serial ports
 std::vector<std::string> getAvailableSerialPorts() {
     std::vector<std::string> ports;
 
@@ -32,7 +32,7 @@ std::vector<std::string> getAvailableSerialPorts() {
     return ports;
 }
 
-
+// Motor control unit, handles dds command subscription, state publishing, and serial communication
 class MotorUnit {
 public:
     MotorUnit(int id, std::shared_ptr<SerialPort> serial, const std::string& cmdTopic, const std::string& stateTopic)
@@ -49,13 +49,11 @@ public:
         sub_->msg_.cmds().resize(1);
         pub_->msg_.states().resize(1);
 
-        thread_ = std::make_unique<unitree::common::RecurrentThread>(2000, [&]() {
-            this->loop();
-        });
+        thread_ = std::make_unique<unitree::common::RecurrentThread>(2000, [&]() { this->loop_(); });
     }
 
 private:
-    void loop() {
+    void loop_() {
         if (sub_->isTimeout()) {
             cmd_.mode = queryMotorMode(cmd_.motorType, MotorMode::BRAKE);
             cmd_.kp = cmd_.kd = cmd_.q = cmd_.dq = cmd_.tau = 0.0f;
@@ -92,12 +90,14 @@ private:
     std::unique_ptr<unitree::common::RecurrentThread> thread_;
 };
 
+// Main server class, handles motor detection, DDS setup, and calibration
 class Dex1GripperServer {
 public:
+    // Constructor attempts to detect motors on provided serial ports
     Dex1GripperServer(const std::vector<std::string>& ports) {
         bool found = false;
         for (int attempt = 0; attempt < 3 && !found; ++attempt) {
-            detectMotors(ports);
+            detectMotors_(ports);
             found = !motors_.empty();
             if (!found) {
                 usleep(50000);
@@ -108,7 +108,7 @@ public:
             exit(1);
         }
     }
-
+    // Set up DDS publishers and subscribers for each detected motor
     void runDDS() {
         // Initialize DDS for each detected motor
         for (auto& [id, motor_info] : motors_) {
@@ -153,9 +153,10 @@ private:
         std::unique_ptr<MotorUnit> unit;
     };
 
-    std::map<int, MotorInfo> motors_;
+    std::map<int, MotorInfo> motors_; // key: motor id, value: MotorInfo(serial, port name, MotorUnit)
 
-    void detectMotors(const std::vector<std::string>& ports) {
+    // Attempt to detect motors on the given serial ports
+    void detectMotors_(const std::vector<std::string>& ports) {
         // ===================== Silence begin =====================
         // Temporarily redirect stdout to /dev/null
         // This is only to suppress unwanted console output from serial->sendRecv()
@@ -174,11 +175,14 @@ private:
                 cmd.id = id;
                 cmd.mode = queryMotorMode(cmd.motorType, MotorMode::FOC);
                 data.motorType = cmd.motorType;
-
+                usleep(200);
                 if (serial->sendRecv(&cmd, &data)) {
+                    if (motors_.count(id)) {
+                        spdlog::warn("Duplicate motor ID {} detected on port {}. Skipping!", id, port);
+                        continue;
+                    } 
                     motors_[id] = { serial, port, nullptr };
                 }
-                usleep(200);
             }
         }
 

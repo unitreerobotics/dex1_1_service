@@ -14,7 +14,7 @@
 
 int main(int argc, char** argv)
 {
-    auto vm = param::helper(argc, argv);
+    auto vm = param::helper_test(argc, argv);
     unitree::robot::ChannelFactory::Instance()->Init(0, vm["network"].as<std::string>());
 
     bool use_left  = vm.count("left")  > 0;
