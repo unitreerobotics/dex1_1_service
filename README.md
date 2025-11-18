@@ -232,6 +232,15 @@ class UnitreeActuatorCfg_W4010_25(UnitreeActuatorCfg):
     armature = 0.00425
 ```
 
+# 5. 🚀🚀🚀 Automatic Startup Service
+After completing the above setup and configuration, and successfully testing dex1_1_gripper_server, you can configure the dex1_1_gripper_server to start automatically on system boot by running the following script:
+
+```bash
+bash setup_autostart.sh
+```
+
+Follow the prompts in the script to complete your configuration.
+
 
 # ❓ FAQ
 1. Error when `make -j6`:
