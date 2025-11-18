@@ -1,6 +1,6 @@
 <div align="center">
   <h1 align="center">
-    <a href="https://www.unitree.com/Dex1-1" target="_blank">Dex1_1 Service</a>
+    <a href="https://www.unitree.com/cn/Dex1-1" target="_blank">Dex1_1 Service</a>
   </h1>
   <p align="center">
     <a> English </a> | <a href="README_zh-CN.md">中文</a> </a>
@@ -10,11 +10,11 @@
   </a>
 </div>
 
-# 0. 📖 Introduction
+# 0. 📖 介绍
 
-This is a serial2dds service for the Dex1_1 gripper.
+这是一个用于 Dex1_1 夹爪的 serial2dds 服务。
 
-The Dex1_1 is a parallel two-finger gripper developed by Unitree. It uses a single unitree M4010 motor to drive the gripper.
+Dex1_1 是 Unitree 开发的夹爪，为具⾝智能应⽤⽽⽣。
 
 <p align="center">
   <a href="https://oss-global-cdn.unitree.com/static/3077509a2c6e4a9ebe1e57d45a42d1af_1796x1420.png">
@@ -22,11 +22,10 @@ The Dex1_1 is a parallel two-finger gripper developed by Unitree. It uses a sing
   </a>
 </p>
 
-
-# 1. 📦 Installation
+# 1. 📦 安装
 
 ```bash
-# at user development computing unit PC2 (NVIDIA Jetson Orin NX board)
+# 在用户开发计算单元 PC2（NVIDIA Jetson Orin NX 板）
 sudo apt install libspdlog-dev libboost-all-dev libyaml-cpp-dev libfmt-dev
 cd ~
 git clone https://github.com/unitreerobotics/dex1_1_service
@@ -36,22 +35,22 @@ cmake ..
 make -j6
 ```
 
-# 2. 🚀 Launch
+# 2. 🚀 启动
 
 ```bash
-# Run `sudo ./dex1_1_gripper_server -h` for details. The output will be:
+# 运行 `sudo ./dex1_1_gripper_server -h` 查看帮助详情。输出为：
 # Unitree Dex1-1 Gripper Server:
 #   -h [ --help ]                produce help message
 #   -v [ --version ]             show version
 #   -n [ --network ] arg (=eth0) dds networkInterface
 #   -c [ --calibration ]         calibrate the gripper motor
 
-# start server
+# 启动服务器
 sudo ./dex1_1_gripper_server --network eth0
-# Simplified (defaults apply)
+# 简化方式（默认参数）
 sudo ./dex1_1_gripper_server
 
-# Run `sudo ./test_dex1_1_gripper_server -h` for details. The output will be:
+# 运行 `sudo ./test_dex1_1_gripper_server -h` 查看帮助详情。输出为：
 # Unitree Dex1-1 Gripper Server Test:
 #   -h [ --help ]                produce help message
 #   -v [ --version ]             show version
@@ -59,27 +58,27 @@ sudo ./dex1_1_gripper_server
 #   -l [ --left ]                test left dex1 gripper
 #   -r [ --right ]               test right dex1 gripper
 
-# run test examples
+# 运行测试示例
 sudo ./test_dex1_1_gripper_server --network eth0 -l -r
-# Test only the left side or the right side individually.
+# 仅测试左侧或右侧夹爪
 sudo ./test_dex1_1_gripper_server --network eth0 -l
-# or test only the right side or the right side individually.
+# 或仅测试右侧夹爪
 sudo ./test_dex1_1_gripper_server -r
 ```
 
-# 3. 📏 Calibration
+# 3. 📏 标定
 
-> 💡 Note: When the motor ID is 0, it corresponds to the right gripper; when the ID is 1, it corresponds to the left gripper.
+> 💡 注意：电机 ID 为 0 时，设定为右侧夹爪； ID 为 1 时，设定为左侧夹爪
 
-Close the gripper and run the following command to calibrate the gripper.
+闭合夹爪并运行以下命令进行电机标定。
 
 ```bash
 sudo ./dex1_1_gripper_server -c
 ```
 
-------
+---
 
-Here is an example output from a calibration process.
+以下是标定过程示例输出。
 
 ```bash
 unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server -c
@@ -94,7 +93,7 @@ unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server -c
 >
 ```
 
-You need to manually close the gripper tightly, just like shown in the picture.
+你需要像图中一样手动紧闭夹爪。
 
 <p align="center">
   <a href="https://oss-global-cdn.unitree.com/static/34d3cbce3ab9404cb6c477a43004b269_1717x1407.png">
@@ -102,7 +101,7 @@ You need to manually close the gripper tightly, just like shown in the picture.
   </a>
 </p>
 
-After closing it, press the **s** key and then **Enter**.
+紧闭合后，按 **s** 键，然后 **Enter**。
 
 ```bash
 > s
@@ -118,7 +117,7 @@ Calibration successful!
 >
 ```
 
-Same as the previous step, continue calibrating the second one.
+与上一步相同，继续标定第二个夹爪。
 
 ```bash
 > s
@@ -130,19 +129,17 @@ Calibration successful!
 [2025-01-01 00:00:28.903] [info] Calibration process completed.
 ```
 
-
-Check results.
+检查结果。
 
 ```bash
 unitree@ubuntu:~/dex1_1_service/build$ sudo ./test_dex1_1_gripper_server -l -r
-# The gripper’s initial position should be near zero.
+# 夹爪初始位置应接近零
 [2025-01-01 00:00:13.776] [info] Right gripper init at q = 0.001
 [2025-01-01 00:00:14.978] [info] Left gripper init at q = 0.000
 R= 0.508 L= 0.502
 ```
 
-
-# 4. 🎨 Actuator Parameters
+# 4. 🎨 电机参数
 
 <p align="center">
   <a href="https://github.com/unitreerobotics/unitree_rl_lab/blob/main/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree_actuators.py">
@@ -232,43 +229,49 @@ class UnitreeActuatorCfg_W4010_25(UnitreeActuatorCfg):
     armature = 0.00425
 ```
 
+# ❓ 常见问题
 
-# ❓ FAQ
-1. Error when `make -j6`:
-    ```bash
-    unitree@ubuntu:~/dex1_1_service/build$ make -j6
-    Scanning dependencies of target dex1_1_gripper_server
-    Scanning dependencies of target test_dex1_1_gripper_server
-    [ 50%] Building CXX object CMakeFiles/test_dex1_1_gripper_server.dir/test/test_gripper.cpp.o
-    [ 50%] Building CXX object CMakeFiles/dex1_1_gripper_server.dir/main.cpp.o
-    /home/unitree/dex1_1_service/test/test_gripper.cpp:1:10: fatal error: unitree/idl/go2/MotorCmds_.hpp: No such file or directory
-        1 | #include <unitree/idl/go2/MotorCmds_.hpp>
-          |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    /home/unitree/dex1_1_service/main.cpp:1:10: fatal error: unitree/idl/go2/MotorCmds_.hpp: No such file or directory
-        1 | #include <unitree/idl/go2/MotorCmds_.hpp>
-          |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    compilation terminated.
-    compilation terminated.
-    ```
-    This error mentions that the unitree_sdk2 headfile could not be found. First compile and install unitree_sdk2:
-    ```bash
-    cd ~
-    git clone https://github.com/unitreerobotics/unitree_sdk2
-    cd unitree_sdk2
-    mkdir build & cd build
-    cmake ..
-    sudo make install
-    ```
-2. Error when `sudo ./dex1_1_gripper_server`:
-    ```bash
-    unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server
-    [2025-08-14 09:56:53.595] [info] Available Serial Ports: /dev/ttyUSB3, /dev/ttyUSB2, /dev/ttyUSB1, /dev/ttyUSB0
-    [2025-08-14 09:56:54.339] [error] Motors not found after multiple attempts.
-    # or
-    unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server
-    [2025-08-14 09:58:12.010] [info] Available Serial Ports: 
-    [2025-08-14 09:58:12.010] [warning] No ttyUSB serial ports found.
-    ```
-    The two situations described above are:  
-    1. The gripper power is not connected.  
-    2. The gripper serial board (which connects to the G1 USB port) is not connected.
+1. `make -j6` 出错：
+
+   ```bash
+   unitree@ubuntu:~/dex1_1_service/build$ make -j6
+   Scanning dependencies of target dex1_1_gripper_server
+   Scanning dependencies of target test_dex1_1_gripper_server
+   [ 50%] Building CXX object CMakeFiles/test_dex1_1_gripper_server.dir/test/test_gripper.cpp.o
+   [ 50%] Building CXX object CMakeFiles/dex1_1_gripper_server.dir/main.cpp.o
+   /home/unitree/dex1_1_service/test/test_gripper.cpp:1:10: fatal error: unitree/idl/go2/MotorCmds_.hpp: No such file or directory
+       1 | #include <unitree/idl/go2/MotorCmds_.hpp>
+         |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   /home/unitree/dex1_1_service/main.cpp:1:10: fatal error: unitree/idl/go2/MotorCmds_.hpp: No such file or directory
+       1 | #include <unitree/idl/go2/MotorCmds_.hpp>
+         |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   compilation terminated.
+   compilation terminated.
+   ```
+
+   该错误说明 unitree_sdk2 头文件未找到。先编译并安装 unitree_sdk2：
+
+   ```bash
+   cd ~
+   git clone https://github.com/unitreerobotics/unitree_sdk2
+   cd unitree_sdk2
+   mkdir build & cd build
+   cmake ..
+   sudo make install
+   ```
+2. `sudo ./dex1_1_gripper_server` 出错：
+
+   ```bash
+   unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server
+   [2025-08-14 09:56:53.595] [info] Available Serial Ports: /dev/ttyUSB3, /dev/ttyUSB2, /dev/ttyUSB1, /dev/ttyUSB0
+   [2025-08-14 09:56:54.339] [error] Motors not found after multiple attempts.
+   # or
+   unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server
+   [2025-08-14 09:58:12.010] [info] Available Serial Ports: 
+   [2025-08-14 09:58:12.010] [warning] No ttyUSB serial ports found.
+   ```
+
+   上述两种情况为：
+
+   1. 夹爪电源未连接或线路接触不良。
+   2. 夹爪串口板（连接到 G1 USB 口）未连接或线路接触不良。
