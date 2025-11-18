@@ -14,35 +14,91 @@
 #include <iostream>
 #include <iomanip>
 #include <limits>
+#include <mutex>
+#include <sstream>
 #include <spdlog/spdlog.h>
 
 std::atomic<float> cmd_q(0.0f);
 std::atomic<bool> running(true);
 
-std::atomic<bool> measuring_left(false), measuring_right(false);
-std::chrono::steady_clock::time_point start_left, start_right;
+std::atomic<bool> measuring(false);
+std::chrono::steady_clock::time_point start_time;
+std::atomic<float> elapsed_ms(-1.0f);
+
+std::atomic<int> stable_count(0);
+const int REQUIRED_STABLE = 3;
+
+std::mutex io_mutex;
+
+static void clear_line_tail() {
+    std::cout << "\033[K";
+}
 
 void input_thread()
 {
     while (running) {
         float tmp;
-        std::cout << "\nplease input target q (rad) for grippers (9999 to exit): ";
+
+        {
+            std::lock_guard<std::mutex> lk(io_mutex);
+            std::cout << "\033[3;1H";
+            std::cout << "please input target angle (rad) [9999 to quit]: ";
+            clear_line_tail();
+            std::cout.flush();
+        }
+
         if (!(std::cin >> tmp)) {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             continue;
         }
+
         if (tmp == 9999.0f) {
             running = false;
             break;
         }
-        cmd_q = tmp;
 
-        measuring_left = true;
-        measuring_right = true;
-        start_left = std::chrono::steady_clock::now();
-        start_right = std::chrono::steady_clock::now();
+        cmd_q = tmp;
+        measuring = true;
+        elapsed_ms = -1.0f;
+        stable_count = 0;
+        start_time = std::chrono::steady_clock::now();
+
+        {
+            std::lock_guard<std::mutex> lk(io_mutex);
+            std::cout << "\033[3;1H";
+            std::cout << "please input target angle (rad) [9999 to quit]: ";
+            clear_line_tail();
+            std::cout.flush();
+        }
     }
+}
+
+
+void print_status_labelled(bool use_left, float q, float elapsed) {
+    std::lock_guard<std::mutex> lk(io_mutex);
+
+    std::cout << "\033[s";
+
+    std::cout << "\033[1;1H";
+    if (use_left) {
+        std::cout << "Left:  " << std::fixed << std::setprecision(3) << q;
+    } else {
+        std::cout << "Right: " << std::fixed << std::setprecision(3) << q;
+    }
+    clear_line_tail();
+
+    std::cout << "\033[2;1H";
+    std::cout << "Time to target (ms): ";
+    if (elapsed >= 0.0f) {
+        std::cout << static_cast<int>(elapsed);
+    } else {
+        std::cout << "   ";
+    }
+    clear_line_tail();
+
+    std::cout << "\033[u";
+    std::cout.flush();
 }
 
 int main(int argc, char** argv)
@@ -52,91 +108,94 @@ int main(int argc, char** argv)
 
     bool use_left  = vm.count("left")  > 0;
     bool use_right = vm.count("right") > 0;
-    if (!use_left && !use_right) {
-        spdlog::warn("No gripper selected! Please use '--left (or -l)', '--right (or -r)', or both.");
+
+    if (use_left == use_right) {
+        spdlog::warn("Please specify either --left or --right (but not both).");
         return 1;
     }
-    std::cout<<"start"<<std::endl;
 
-    std::shared_ptr<unitree::robot::RealTimePublisher<unitree_go::msg::dds_::MotorCmds_>>    left_pub, right_pub;
-    std::shared_ptr<unitree::robot::SubscriptionBase<unitree_go::msg::dds_::MotorStates_>>   left_sub, right_sub;
-
-
-    if (use_right) {
-        right_sub = std::make_shared<unitree::robot::SubscriptionBase<unitree_go::msg::dds_::MotorStates_>>("rt/dex1/right/state");
-        right_sub->msg_.states().resize(1);
-        right_sub->wait_for_connection();
-
-        right_pub = std::make_shared<unitree::robot::RealTimePublisher<unitree_go::msg::dds_::MotorCmds_>>("rt/dex1/right/cmd");
-        right_pub->msg_.cmds().resize(1);
-        right_pub->msg_.cmds()[0].mode() = 1;
-        right_pub->msg_.cmds()[0].kp()   = 5.0f;
-        right_pub->msg_.cmds()[0].kd()   = 0.05f;
-        float q_init = right_sub->msg_.states()[0].q();
-        spdlog::info("Right gripper init at q = {:.3f}", q_init);
-    }
-
+    std::shared_ptr<unitree::robot::RealTimePublisher<unitree_go::msg::dds_::MotorCmds_>> pub;
+    std::shared_ptr<unitree::robot::SubscriptionBase<unitree_go::msg::dds_::MotorStates_>> sub;
 
     if (use_left) {
-        left_sub = std::make_shared<unitree::robot::SubscriptionBase<unitree_go::msg::dds_::MotorStates_>>("rt/dex1/left/state");
-        left_sub->msg_.states().resize(1);
-        left_sub->wait_for_connection();
+        sub = std::make_shared<unitree::robot::SubscriptionBase<unitree_go::msg::dds_::MotorStates_>>("rt/dex1/left/state");
+        sub->msg_.states().resize(1);
+        sub->wait_for_connection();
 
-        left_pub = std::make_shared<unitree::robot::RealTimePublisher<unitree_go::msg::dds_::MotorCmds_>>("rt/dex1/left/cmd");
-        left_pub->msg_.cmds().resize(1);
-        left_pub->msg_.cmds()[0].mode() = 1;
-        left_pub->msg_.cmds()[0].kp()   = 5.0f;
-        left_pub->msg_.cmds()[0].kd()   = 0.05f;
-        float q_init = left_sub->msg_.states()[0].q();
-        spdlog::info("Left gripper init at q = {:.3f}", q_init);
+        pub = std::make_shared<unitree::robot::RealTimePublisher<unitree_go::msg::dds_::MotorCmds_>>("rt/dex1/left/cmd");
+        pub->msg_.cmds().resize(1);
+        pub->msg_.cmds()[0].mode() = 1;
+        pub->msg_.cmds()[0].kp()   = 5.0f;
+        pub->msg_.cmds()[0].kd()   = 0.05f;
+    } else {
+        sub = std::make_shared<unitree::robot::SubscriptionBase<unitree_go::msg::dds_::MotorStates_>>("rt/dex1/right/state");
+        sub->msg_.states().resize(1);
+        sub->wait_for_connection();
+
+        pub = std::make_shared<unitree::robot::RealTimePublisher<unitree_go::msg::dds_::MotorCmds_>>("rt/dex1/right/cmd");
+        pub->msg_.cmds().resize(1);
+        pub->msg_.cmds()[0].mode() = 1;
+        pub->msg_.cmds()[0].kp()   = 5.0f;
+        pub->msg_.cmds()[0].kd()   = 0.05f;
     }
 
     std::thread t(input_thread);
 
+    {
+        std::lock_guard<std::mutex> lk(io_mutex);
+        std::cout << "\033[2J";
+        std::cout << "\033[1;1H";
+        std::cout.flush();
+    }
 
     while (running) {
         float target = cmd_q.load();
-        std::cout << "\r";
+        float q = sub->msg_.states()[0].q();
 
-        if (use_right) {
-            float state_q = right_sub->msg_.states()[0].q();
+        pub->msg_.cmds()[0].q() = target;
+        pub->unlockAndPublish();
 
-            right_pub->msg_.cmds()[0].q() = target;
-            right_pub->unlockAndPublish();
+        bool within = false;
+        within = std::fabs(q - target) < 0.05f;
 
-            if (measuring_right) {
-                float error = std::fabs(state_q - target);
-                if (error < 0.05f) {
-                    auto end_time = std::chrono::steady_clock::now();
-                    double elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_right).count();
-                    std::cout << "\n Right gripper reached target position in " << elapsed_ms << " ms\n";
-                    measuring_right = false;
+        if (measuring.load()) {
+            if (within) {
+                if (stable_count == 0) {
+                    auto end = std::chrono::steady_clock::now();
+                    float ms = static_cast<float>(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time).count());
+                    elapsed_ms = ms;
+                    measuring = false;
                 }
+                stable_count++;
+            } else {
+                stable_count = 0;
+            }
+        }        
+
+        if (measuring.load() && stable_count.load() == 0 && within) {
+            auto end = std::chrono::steady_clock::now();
+            float ms = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time).count());
+            if (ms < 10.0f) {
+                elapsed_ms = ms;
+                measuring = false;
             }
         }
 
-        if (use_left) {
-            float state_q = left_sub->msg_.states()[0].q();
-            std::cout << "L=" << std::setw(6) << std::fixed << std::setprecision(3) << state_q << " ";
-            left_pub->msg_.cmds()[0].q() = target;
-            left_pub->unlockAndPublish();
+        float em = elapsed_ms.load();
+        print_status_labelled(use_left, q, em);
 
-            if (measuring_left) {
-                float error = std::fabs(state_q - target);
-                if (error < 0.01f) {
-                    auto end_time = std::chrono::steady_clock::now();
-                    double elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_left).count();
-                    std::cout << "\n Left gripper reached target position in " << elapsed_ms << " ms\n";
-                    measuring_left = false;
-                }
-            }
-        }
-
-        std::cout << std::flush;
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     if (t.joinable()) t.join();
-    spdlog::info("Test program exited cleanly.");
+
+    {
+        std::lock_guard<std::mutex> lk(io_mutex);
+        std::cout << "\033[4;1H";
+        std::cout << "\nExiting...\n";
+        std::cout.flush();
+    }
+
     return 0;
 }
