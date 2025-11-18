@@ -139,7 +139,7 @@ R= 0.508 L= 0.502
 
 <p align="center">
   <a href="https://github.com/unitreerobotics/unitree_rl_lab/blob/main/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree_actuators.py">
-    <img src="https://oss-global-cdn.unitree.com/static/8f96b5d7abe84e11bf206dac64115a38_1698x1041.png" alt="actuator" style="width: 85%;">
+    <img src="./gripper_TN.png" alt="actuator" style="width: 85%;">
   </a>
 </p>
 
