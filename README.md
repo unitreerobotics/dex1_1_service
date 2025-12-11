@@ -2,12 +2,12 @@
   <h1 align="center">
     <a href="https://www.unitree.com/Dex1-1" target="_blank">Dex1_1 Service</a>
   </h1>
-  <p align="center">
-    <a> English </a> | <a href="README_zh-CN.md">中文</a> </a>
-  </p>
   <a href="https://www.unitree.com/" target="_blank">
     <img src="https://www.unitree.com/images/0079f8938336436e955ea3a98c4e1e59.svg" alt="Unitree LOGO" width="15%">
   </a>
+  <p align="center">
+    <a> English </a> | <a href="README_zh-CN.md">中文</a> </a>
+  </p>
 </div>
 
 # 0. 📖 Introduction
@@ -142,97 +142,7 @@ R= 0.508 L= 0.502
 ```
 
 
-# 4. 🎨 Actuator Parameters
-
-<p align="center">
-  <a href="https://github.com/unitreerobotics/unitree_rl_lab/blob/main/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree_actuators.py">
-    <img src="./gripper_TN.png" alt="actuator" style="width: 85%;">
-  </a>
-</p>
-
-```python
-class UnitreeActuator(DelayedPDActuator):
-    """Unitree actuator class that implements a torque-speed curve for the actuators.
-
-    The torque-speed curve is defined as follows:
-
-            Torque Limit, N·m
-                ^
-    Y2──────────|
-                |──────────────Y1
-                |              │\
-                |              │ \
-                |              │  \
-                |              |   \
-    ------------+--------------|------> velocity: rad/s
-                              X1   X2
-
-    - Y1: Peak Torque Test (Torque and Speed in the Same Direction)
-    - Y2: Peak Torque Test (Torque and Speed in the Opposite Direction)
-    - X1: Maximum Speed at Full Torque (T-N Curve Knee Point)
-    - X2: No-Load Speed Test
-
-    - Fs: Static friction coefficient
-    - Fd: Dynamic friction coefficient
-    - Va: Velocity at which the friction is fully activated
-    """
-
-    cfg: UnitreeActuatorCfg
-
-    armature: torch.Tensor
-    """The armature of the actuator joints. Shape is (num_envs, num_joints).
-        armature = J2 + J1 * i2 ^ 2 + Jr * (i1 * i2) ^ 2
-    """
-    # ...
-
-@configclass
-class UnitreeActuatorCfg(DelayedPDActuatorCfg):
-    """
-    Configuration for Unitree actuators.
-    """
-
-    class_type: type = UnitreeActuator
-
-    X1: float = 1e9
-    """Maximum Speed at Full Torque(T-N Curve Knee Point) Unit: rad/s"""
-
-    X2: float = 1e9
-    """No-Load Speed Test Unit: rad/s"""
-
-    Y1: float = MISSING
-    """Peak Torque Test(Torque and Speed in the Same Direction) Unit: N*m"""
-
-    Y2: float | None = None
-    """Peak Torque Test(Torque and Speed in the Opposite Direction) Unit: N*m"""
-
-    Fs: float = 0.0
-    """ Static friction coefficient """
-
-    Fd: float = 0.0
-    """ Dynamic friction coefficient """
-
-    Va: float = 0.01
-    """ Velocity at which the friction is fully activated """
-
-@configclass
-class UnitreeActuatorCfg_W4010_25(UnitreeActuatorCfg):
-    X1 = 15.3
-    X2 = 24.76
-    Y1 = 4.8
-    Y2 = 8.6
-
-    Fs = 0.6
-    Fd = 0.06
-
-    """
-    | rotor  | 0.068e-4 kg·m²
-    | gear_1 |                | ratio | 5
-    | gear_2 |                | ratio | 5
-    """
-    armature = 0.00425
-```
-
-# 5. 🚀🚀🚀 Automatic Startup Service
+# 4. 🚀🚀🚀 Automatic Startup Service
 After completing the above setup and configuration, and successfully testing dex1_1_gripper_server, you can configure the dex1_1_gripper_server to start automatically on system boot by running the following script:
 
 ```bash
