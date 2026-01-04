@@ -23,6 +23,19 @@ The Dex1_1 is a parallel two-finger gripper developed by Unitree. It uses a sing
 </p>
 
 
+```mermaid
+graph LR
+A(user) -- rt/dex1/right/cmd --> B(dex1_1, motor_id = 0)
+B(dex1_1, motor_id = 0) -- rt/dex1/right/state --> A(user)
+
+C(user) -- rt/dex1/left/cmd --> D(dex1_1, motor_id = 1)
+D(dex1_1, motor_id = 1) -- rt/dex1/left/state --> C(user)
+```
+
+
+
+
+
 # 1. 📦 Installation
 
 ```bash
@@ -85,8 +98,8 @@ Here is an example output from a calibration process.
 unitree@ubuntu:~/dex1_1_service/build$ sudo ./dex1_1_gripper_server -c
 [2025-01-01 00:00:26.514] [info] Available Serial Ports: /dev/ttyUSB3, /dev/ttyUSB2, /dev/ttyUSB1, /dev/ttyUSB0
 [2025-01-01 00:00:26.669] [info] Detected motors:
-[2025-01-01 00:00:26.669] [info]   - Motor ID: 0         Side: Right     Port: /dev/ttyUSB2      cmdTopic: rt/dex1/Right/cmd     stateTopic: rt/dex1/Right/state
-[2025-01-01 00:00:26.669] [info]   - Motor ID: 1         Side: Left      Port: /dev/ttyUSB1      cmdTopic: rt/dex1/Left/cmd      stateTopic: rt/dex1/Left/state
+[2025-01-01 00:00:26.669] [info]   - Motor ID: 0         Side: Right     Port: /dev/ttyUSB2      cmdTopic: rt/dex1/right/cmd     stateTopic: rt/dex1/right/state
+[2025-01-01 00:00:26.669] [info]   - Motor ID: 1         Side: Left      Port: /dev/ttyUSB1      cmdTopic: rt/dex1/left/cmd      stateTopic: rt/dex1/left/state
 [2025-01-01 00:00:26.669] [info] ========== Motor Calibration (Motor 1 (index) of 2 (total)) ==========
 [2025-01-01 00:00:26.669] [info]   - Motor ID: 0,        Side: Right,    Port: /dev/ttyUSB2
 [2025-01-01 00:00:26.669] [info] Please manually close the gripper tightly. 
