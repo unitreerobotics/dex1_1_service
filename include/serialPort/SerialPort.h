@@ -1,21 +1,19 @@
 #ifndef __SERIALPORT_H
 #define __SERIALPORT_H
 
-/* 
+/*
 High frequency serial communication,
 Not that common, but useful for motor communication.
+
+Refactored to use libserialport for better portability.
 */
-#include <termios.h>
-#include <sys/select.h>
 #include <string>
 #include <string.h>
 #include <stdint.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/serial.h>    
 #include <unistd.h>
 #include <iostream>
 
+#include "libserialport.h"
 #include "serialPort/include/errorClass.h"
 #include "unitreeMotor/unitreeMotor.h"
 #include "IOPort/IOPort.h"
@@ -91,10 +89,7 @@ private:
     parity_t _parity;
     stopbits_t _stopbits;
     flowcontrol_t _flowcontrol;
-    bool _xonxoff;
-    bool _rtscts;
-    int _fd;
-    fd_set _rSet;
+    struct sp_port *_port;
 
 };
 

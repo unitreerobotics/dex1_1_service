@@ -2,6 +2,7 @@
 #define __MOTOR_MSG_G1_H
 
 #include <stdint.h>
+#include "crc/crc32.h"
 
 #pragma pack(1)
 /**

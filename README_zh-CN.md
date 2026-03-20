@@ -35,6 +35,8 @@ D(dex1_1, motor_id = 1) -- rt/dex1/left/state --> C(user)
 
 ```bash
 # 在用户开发计算单元 PC2（NVIDIA Jetson Orin NX 板）
+sudo apt update
+sudo apt install libserialport-dev
 sudo apt install libspdlog-dev libboost-all-dev libyaml-cpp-dev libfmt-dev
 cd ~
 git clone https://github.com/unitreerobotics/dex1_1_service

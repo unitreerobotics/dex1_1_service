@@ -20,11 +20,18 @@
 // Function to list available serial ports
 std::vector<std::string> getAvailableSerialPorts() {
     std::vector<std::string> ports;
+    constexpr const char* kSupportedPrefixes[] = {
+        "/dev/ttyUSB",
+        "/dev/ttyCH343USB", // support new serial hub
+    };
 
     for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
         std::string path = entry.path().string();
-        if (path.rfind("/dev/ttyUSB", 0) == 0) {  // Only include ttyUSB*
-            ports.push_back(path);
+        for (const char* prefix : kSupportedPrefixes) {
+            if (path.rfind(prefix, 0) == 0) {
+                ports.push_back(path);
+                break;
+            }
         }
     }
     spdlog::info("Available Serial Ports: {}", fmt::join(ports, ", "));
