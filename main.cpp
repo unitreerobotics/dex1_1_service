@@ -167,10 +167,12 @@ private:
         // ===================== Silence begin =====================
         // Temporarily redirect stdout to /dev/null
         // This is only to suppress unwanted console output from serial->sendRecv()
-        int saved_stdout = dup(STDOUT_FILENO);
-        int null_fd = open("/dev/null", O_WRONLY);
-        dup2(null_fd, STDOUT_FILENO);
-        close(null_fd);
+
+        // int saved_stdout = dup(STDOUT_FILENO);
+        // int null_fd = open("/dev/null", O_WRONLY);
+        // dup2(null_fd, STDOUT_FILENO);
+        // close(null_fd);
+
         // ===================== Silence begin =====================
 
         for (const auto& port : ports) {
@@ -195,8 +197,10 @@ private:
 
         // ===================== Silence end =====================
         // Restore original stdout
-        dup2(saved_stdout, STDOUT_FILENO);
-        close(saved_stdout);
+
+        // dup2(saved_stdout, STDOUT_FILENO);
+        // close(saved_stdout);
+        
         // ===================== Silence end =====================
         
         if (!motors_.empty()) {
