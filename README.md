@@ -206,3 +206,12 @@ Follow the prompts in the script to complete your configuration.
     The two situations described above are:  
     1. The gripper power is not connected.  
     2. The gripper serial board (which connects to the G1 USB port) is not connected.
+3. A USB hub with an Ethernet device is plugged into the robot's Type-C port:
+
+    In this hardware setup, pay attention to the driver's `-n [ --network ] arg (=eth0) dds networkInterface` parameter. The extra Ethernet interface introduced by the USB hub may cause the default `eth0` to no longer be the correct interface. You can use `ifconfig` or `ip addr` to check which interface currently has an IP address in the `192.168.123.*` subnet, and then specify the correct network interface name according to the actual system configuration, such as `eth1`.
+
+    Note that the auto-start script `setup_autostart.sh` does not specify a network interface parameter, so it uses the default `eth0`. If `eth0` is not the correct interface on your system, you need to modify `setup_autostart.sh` and add the correct network interface parameter to the `ExecStart` line, for example:
+
+    ```bash
+    ExecStart=$SCRIPT_BIN/dex1_1_gripper_server -n eth1
+    ```

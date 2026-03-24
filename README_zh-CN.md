@@ -208,3 +208,13 @@ bash setup_autostart.sh
 
    1. 夹爪电源未连接或线路接触不良。
    2. 夹爪串口板（连接到 G1 USB 口）未连接或线路接触不良。
+
+3. 机器人type-C口插入带有以太网设备的USB Hub设备
+  
+    该硬件设置下，请注意该驱动的`-n [ --network ] arg (=eth0) dds networkInterface`参数配置。USB Hub设备带来的额外以太网口可能会导致默认的`eth0`网络接口不再是正确的接口。你可以通过`ifconfig`或`ip addr`命令查看当前系统中的`192.168.123.*`网段网络接口，并根据实际情况指定正确的网络接口名称，例如`eth1`等。
+    
+    注意，自启动脚本`setup_autostart.sh`并没有指定网卡参数，因此使用了默认的`eth0`。如果你的系统中`eth0`不是正确的接口，你需要修改`setup_autostart.sh`脚本，在其中的`ExecStart`行添加正确的网络接口参数，例如：
+
+    ```bash
+    ExecStart=$SCRIPT_BIN/dex1_1_gripper_server -n eth1
+    ```
