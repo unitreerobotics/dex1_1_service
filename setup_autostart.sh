@@ -44,6 +44,7 @@ Type=simple
 User=unitree
 Group=dialout
 WorkingDirectory=$SCRIPT_BIN
+# CPUAffinity=2
 ExecStart=$SCRIPT_BIN/dex1_1_gripper_server
 Restart=always
 RestartSec=5
