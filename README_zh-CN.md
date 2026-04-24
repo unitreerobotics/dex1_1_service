@@ -46,6 +46,13 @@ cmake ..
 make -j6
 ```
 
+> 💡 注意：在 `lib` 目录下提供了上述安装命令中sudo apt install libserialport-dev的离线文件 libserialport0_0.1.1-3_arm64.deb 和 libserialport-dev_0.1.1-3_arm64.deb 以供用户方便离线安装。如果你在安装 libserialport 时遇到问题，可以尝试安装这两个 deb 文件。要注意安装顺序，以下是安装命令示例：
+
+```bash
+sudo dpkg -i lib/libserialport0_0.1.1-3_arm64.deb
+sudo dpkg -i lib/libserialport-dev_0.1.1-3_arm64.deb
+```
+
 # 2. 🚀 启动
 
 ```bash
