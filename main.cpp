@@ -16,6 +16,9 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <cstdlib>
+
+constexpr int kMaxConsecutiveCommFailures = 50;
 
 // Function to list available serial ports
 std::vector<std::string> getAvailableSerialPorts() {
@@ -60,6 +63,10 @@ public:
     }
 
 private:
+    std::string sideName_() const {
+        return (id_ == 0) ? "right" : "left";
+    }
+
     void loop_() {
         if (sub_->isTimeout()) {
             cmd_.mode = queryMotorMode(cmd_.motorType, MotorMode::BRAKE);
@@ -77,7 +84,19 @@ private:
             cmd_.timeout = 0;
         }
 
-        serial_->sendRecv(&cmd_, &state_);
+        if (!serial_->sendRecv(&cmd_, &state_)) {
+            ++consecutive_comm_failures_;
+            if (consecutive_comm_failures_ == 1 || consecutive_comm_failures_ % 10 == 0) {
+                spdlog::warn("{} Dex1-1 gripper communication failure count: {}", sideName_(), consecutive_comm_failures_);
+            }
+            if (consecutive_comm_failures_ >= kMaxConsecutiveCommFailures) {
+                spdlog::error("{} Dex1-1 gripper appears offline. Exiting for systemd restart.", sideName_());
+                std::exit(1);
+            }
+            return;
+        }
+        consecutive_comm_failures_ = 0;
+
         if (pub_->trylock()) {
             pub_->msg_.states()[0].q() = state_.q / gear_ratio_;
             pub_->msg_.states()[0].dq() = state_.dq / gear_ratio_;
@@ -92,6 +111,7 @@ private:
     std::shared_ptr<SerialPort> serial_;
     MotorCmd cmd_;
     MotorData state_;
+    int consecutive_comm_failures_{0};
     std::shared_ptr<unitree::robot::SubscriptionBase<unitree_go::msg::dds_::MotorCmds_>> sub_;
     std::shared_ptr<unitree::robot::RealTimePublisher<unitree_go::msg::dds_::MotorStates_>> pub_;
     std::unique_ptr<unitree::common::RecurrentThread> thread_;
@@ -102,16 +122,17 @@ class Dex1GripperServer {
 public:
     // Constructor attempts to detect motors on provided serial ports
     Dex1GripperServer(const std::vector<std::string>& ports) {
-        bool found = false;
-        for (int attempt = 0; attempt < 3 && !found; ++attempt) {
+        bool found_all = false;
+        for (int attempt = 0; attempt < 3 && !found_all; ++attempt) {
             detectMotors_(ports);
-            found = !motors_.empty();
-            if (!found) {
+            found_all = hasRequiredMotors_();
+            if (!found_all) {
                 usleep(50000);
             }
         }
-        if (!found) {
-            spdlog::error("Motors not found after multiple attempts.");
+        if (!found_all) {
+            logMissingMotors_();
+            spdlog::error("Both left and right Dex1-1 gripper motors must be online. Exiting for systemd restart.");
             exit(1);
         }
     }
@@ -119,7 +140,7 @@ public:
     void runDDS() {
         // Initialize DDS for each detected motor
         for (auto& [id, motor_info] : motors_) {
-            std::string side = (id == 0) ? "right" : "left";
+            std::string side = sideName_(id);
             std::string cmdTopic = "rt/dex1/" + side + "/cmd";
             std::string stateTopic = "rt/dex1/" + side + "/state";
             motor_info.unit = std::make_unique<MotorUnit>(id, motor_info.serial, cmdTopic, stateTopic);
@@ -131,7 +152,7 @@ public:
         int total = motors_.size();
         int index = 1;
         for (auto& [id, motor_info] : motors_) {
-            std::string side = (id == 0) ? "right" : "left";
+            std::string side = sideName_(id);
             spdlog::info("========== Motor Calibration (Motor {} (index) of {} (total)) ==========", index, total);
             spdlog::info("  - Motor ID: {}, \t Side: {}, \t Port: {}", id, side, motor_info.port_name);
             spdlog::info("Please manually close the gripper tightly. \n \t\t\t\t Then press 's' + Enter to calibrate, or any other key to skip.");
@@ -162,8 +183,27 @@ private:
 
     std::map<int, MotorInfo> motors_; // key: motor id, value: MotorInfo(serial, port name, MotorUnit)
 
+    static std::string sideName_(int id) {
+        return (id == 0) ? "right" : "left";
+    }
+
+    bool hasRequiredMotors_() const {
+        return motors_.count(0) > 0 && motors_.count(1) > 0;
+    }
+
+    void logMissingMotors_() const {
+        if (motors_.count(0) == 0) {
+            spdlog::error("Missing right Dex1-1 gripper motor (motor ID 0).");
+        }
+        if (motors_.count(1) == 0) {
+            spdlog::error("Missing left Dex1-1 gripper motor (motor ID 1).");
+        }
+    }
+
     // Attempt to detect motors on the given serial ports
     void detectMotors_(const std::vector<std::string>& ports) {
+        motors_.clear();
+
         // ===================== Silence begin =====================
         // Temporarily redirect stdout to /dev/null
         // This is only to suppress unwanted console output from serial->sendRecv()
@@ -206,7 +246,7 @@ private:
         if (!motors_.empty()) {
             spdlog::info("Detected motors:");
             for (const auto& [id, motor_info] : motors_) {
-                std::string side = (id == 0) ? "right" : "left";
+                std::string side = sideName_(id);
                 std::string cmdTopic = "rt/dex1/" + side + "/cmd";
                 std::string stateTopic = "rt/dex1/" + side + "/state";
                 spdlog::info("  - Motor ID: {} \t Side: {} \t Port: {} \t cmdTopic: {} \t stateTopic: {}", id, side, motor_info.port_name, cmdTopic, stateTopic);
@@ -221,8 +261,8 @@ int main(int argc, char** argv) {
 
     std::vector<std::string> ports = getAvailableSerialPorts();
     if (ports.empty()) {
-        spdlog::warn("No ttyUSB serial ports found.");
-        return 0;
+        spdlog::error("No supported serial ports found. Exiting for systemd restart.");
+        return 1;
     }
 
     Dex1GripperServer server(ports);
