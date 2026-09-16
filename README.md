@@ -51,10 +51,15 @@ cmake ..
 make -j6
 ```
 
-> 💡 Note: The `lib` directory provides offline packages for `sudo apt install libserialport-dev`: `libserialport0_0.1.1-3_arm64.deb` and `libserialport-dev_0.1.1-3_arm64.deb`. If you have trouble installing `libserialport`, you can try installing these two deb packages. Install `libserialport0` first, then `libserialport-dev`:
+> 💡 Note: The `lib` directory provides offline packages for `sudo apt install libserialport-dev` (Ubuntu 22.04), for both `arm64` (Jetson) and `amd64` (x86_64) machines. If you have trouble installing `libserialport`, you can try installing these two deb packages. Install `libserialport0` first, then `libserialport-dev`:
 > ```bash
+> # arm64 (NVIDIA Jetson Orin NX)
 > sudo dpkg -i lib/libserialport0_0.1.1-3_arm64.deb
 > sudo dpkg -i lib/libserialport-dev_0.1.1-3_arm64.deb
+>
+> # amd64 / x86_64 PC
+> sudo dpkg -i lib/libserialport0_0.1.1-3_amd64.deb
+> sudo dpkg -i lib/libserialport-dev_0.1.1-3_amd64.deb
 > ```
 
 # 2. 🚀 Launch

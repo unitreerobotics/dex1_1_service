@@ -23,6 +23,7 @@ std::vector<std::string> getAvailableSerialPorts() {
     constexpr const char* kSupportedPrefixes[] = {
         "/dev/ttyUSB",
         "/dev/ttyCH343USB", // support new serial hub
+        "/dev/ttyACM", // support unitree H2
     };
 
     for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
