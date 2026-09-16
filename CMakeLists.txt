@@ -22,10 +22,8 @@ if(POLICY CMP0167)
 endif()
 
 find_package(Boost REQUIRED COMPONENTS program_options)
-find_package(yaml-cpp REQUIRED)
 
 include_directories(
-  /usr/local/include/ddscxx
   ${CMAKE_SOURCE_DIR}/include
 )
 
@@ -33,8 +31,8 @@ link_directories(
   ${CMAKE_SOURCE_DIR}/lib
 )
 link_libraries(
-  unitree_sdk2 ddsc ddscxx rt pthread
-  libboost_program_options.a yaml-cpp fmt
+  rt pthread
+  libboost_program_options.a fmt
 )
 
 if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64") 
@@ -44,6 +42,4 @@ else()
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-add_executable(dex1_1_gripper_server main.cpp)
-add_executable(test_dex1_1_gripper_server test/test_gripper.cpp)
-add_executable(test_dex1_1_gripper_server2 test/test_gripper2.cpp)
+add_executable(dex1_1_internal_calibration main.cpp)
